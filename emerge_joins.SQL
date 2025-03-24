@@ -27,9 +27,11 @@ left join `prod-pipeline-initia-6a1e01ea.stacks_people.voters_modeling` st on m.
 = st.voterbase_id
 
 ## BR Officeholders
-SELECT m.`Indigo voter ID` as stacks_id, i.candidate_id , office_holder_id,
-o.position_id, o.position_name, o.normalized_position_name, o.start_at, o.end_at, o.state,
-o.level, o.is_judicial
+SELECT m.`Indigo voter ID` as stacks_id, i.candidate_id , office_holder_id, o.state, o.level, o.is_judicial,
+o.position_id, o.position_name, o.normalized_position_name, m.`Registration address` as reg_address, m.`Registration city` as reg_city, m.`Registration state` as reg_state,
+m.`Registration ZIP code` as reg_zip, m.`Mailing address` as mail_address, m.`Mailing city` as mail_city, m.`Mailing state` as mail_state, m.`Mailing ZIP code` as mail_zip,
+m.`Party registration` as registered_party, m.`Dem partisanship` as dem_partisanship, m.`Presidental general turnout` as pres_gen_turnout, m.`Harris 2024 support` as harris_support,
+o.start_at, o.end_at
 from `prod-pipeline-initia-6a1e01ea.partner_matches.emerge_matched_032125` m
 left join `prod-pipeline-initia-6a1e01ea.matched_ballotready.br_candidacies_matched_indigo` i
 on
