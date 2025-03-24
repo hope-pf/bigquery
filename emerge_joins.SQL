@@ -1,25 +1,30 @@
 ## voterfile
 SELECT m.`Indigo voter ID` as stacks_id, i.candidate_id as ballotready_id ,
+`VANID` as van_id,
 `Date of birth` as dob,
 m.`Gender` as gender,
 `Ethnicity` as race,
-`Registration address` as address,
-`Registration city` as city,
-`Registration state` as state,
-`Registration ZIP code` as zip,
+`Registration address` as reg_address,
+`Registration city` as reg_city,
+`Registration state` as reg_state,
+`Registration ZIP code` as reg_zip,
+`Mailing address` as mail_address,
+`Mailing city` as mail_city,
+`Mailing state` as mail_state,
+`Mailing ZIP code` as mail_zip,
 `Cell phone number` as cell,
 `Landline phone number` as landline,
 `Party registration` as registered_party,
 `Dem partisanship` as dem_partisanship,
 `Presidental general turnout` as pres_gen_turnout,
 `Harris 2024 support` as harris_support
+
 from `prod-pipeline-initia-6a1e01ea.partner_matches.emerge_matched_032125` m
 left join `prod-pipeline-initia-6a1e01ea.matched_ballotready.br_candidacies_matched_indigo` i
 on
 m.`Indigo voter ID`= i.indigo_voter_id
 left join `prod-pipeline-initia-6a1e01ea.stacks_people.voters_modeling` st on m.`Indigo voter ID`
 = st.voterbase_id
-
 
 ## BR Officeholders
 SELECT m.`Indigo voter ID` as stacks_id, i.candidate_id , office_holder_id,
