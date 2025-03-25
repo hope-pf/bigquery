@@ -46,7 +46,7 @@ left join `prod-pipeline-initia-6a1e01ea.ballotready_avro.office_holders` o usin
 where office_holder_id is not null
 
 ## BR Candidates
-SELECT m.`Indigo voter ID` as stacks_id, m.`VANID` as van_id,  i.candidate_id ,
+SELECT m.`Indigo voter ID` as stacks_id, m.`VANID` as van_id,  o.election_id, i.candidate_id , m.`First name` as first_name, m.`Middle name` as middle_name, m.`Last name` as last_name,
 o.position_id, o.position_name, o.normalized_position_name, o.election_day, o.state, o.level,
 o.is_judicial, o.is_primary, o.election_result
 from `prod-pipeline-initia-6a1e01ea.partner_matches.emerge_matched_032125` m
@@ -55,3 +55,4 @@ on
 m.`Indigo voter ID`= i.indigo_voter_id
 left join `prod-pipeline-initia-6a1e01ea.ballotready_avro.candidacies` o using (candidate_id)
 where i.candidate_id is not null
+order by election_day asc
