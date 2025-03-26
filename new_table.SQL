@@ -1,4 +1,13 @@
 ### this table is for LEAD PA, Oliver wants an end result of a pivot table, showing vote totals for everything except USP, STS, STH
+## LEAD PA:
+## Oliver: wants a pivot table. in partner_lead_pa, joins precinct 2020, 2022, 2024 —> table is general_20_22_24
+## drop table, recreate is as general_22_23_24;  union, select from 2022, 2023, 2024
+##congress national, % for dem / gop; sum of votes for dems statewide candidates divided by all votes, grouped by legislative district; put the years in as rows
+## don’t model it off of general_22_23_24.
+## imagine: columns: votes for each party, rows are senate and house district, values in cells are % of votes won by each party
+## each candidate has vote_total, make a cute for votes won by what candidate; DEM - case when candidate_party is DEM/REP/IND
+## we want: where candidate_office_code not in (USP, STS, STH) 
+
 CREATE TABLE `prod-pipeline-initia-6a1e01ea.partner_lead_pa.general_22_23_24` AS
 WITH combined_votes AS (
     SELECT 
