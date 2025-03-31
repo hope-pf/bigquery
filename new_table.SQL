@@ -26,7 +26,7 @@ WITH combined_votes AS (
         UNION ALL
         SELECT 2023 AS year, * FROM `prod-pipeline-initia-6a1e01ea.partner_lead_pa.precinct_municipal_returns_2023`
     )
-    WHERE candidate_office_code NOT IN ('USP', 'STS', 'STH')  
+    WHERE candidate_office_code NOT IN ('USP')  
     GROUP BY year, candidate_district, candidate_office_code, election_type, party_simplified
 ),
 performance AS (
@@ -40,7 +40,7 @@ performance AS (
         NULLIF(SUM(total_votes), 0) AS dem_pct,
         SUM(CASE WHEN party_simplified = 'REP' THEN total_votes ELSE 0 END) * 1.0 /
         NULLIF(SUM(total_votes), 0) AS rep_pct,
-        SUM(CASE WHEN party_simplified = 'IND' THEN total_votes ELSE 0 END) * 1.0 /
+        SUM(CASE WHEN party_simplified = 'THIRD' THEN total_votes ELSE 0 END) * 1.0 /
         NULLIF(SUM(total_votes), 0) AS ind_pct,
         SUM(total_yes) AS total_yes,
         SUM(total_no) AS total_no,
@@ -63,6 +63,19 @@ SELECT
     ind_pct,
     total_yes,
     total_no,
-    yes_pct
+    yes_pct,
+    CASE 
+        WHEN candidate_office_code = 'STS' THEN 'State Senate'
+        WHEN candidate_office_code = 'STH' THEN 'State House'
+        ELSE 'Other'
+    END AS chamber,
+    CONCAT(
+        CASE 
+            WHEN candidate_office_code = 'STS' THEN 'SD-' 
+            WHEN candidate_office_code = 'STH' THEN 'HD-' 
+            ELSE 'Other-'
+        END,
+        candidate_district
+    ) AS district_id
 FROM performance
 ORDER BY year, candidate_district, election_type;
