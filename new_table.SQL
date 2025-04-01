@@ -79,3 +79,8 @@ SELECT
     ) AS district_id
 FROM performance
 ORDER BY year, candidate_district, election_type;
+
+### list out columns
+SELECT column_name
+FROM `prod-pipeline-initia-6a1e01ea.ballotready.INFORMATION_SCHEMA.COLUMNS`
+WHERE table_name = 'offices';
