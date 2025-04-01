@@ -2,7 +2,7 @@
 #sum_number_of_seats: The total number of seats for the given position (summed across all rows).
 #total_candidates: The total number of candidates (summed across all rows).
 #general_candidates: The number of candidates in the general election (summed across all rows).
-#uncontested_seats: The number of uncontested seats for each position.
+#uncontested_seats: The number of uncontested seats for each position, includes primary and general.
 #uncontested_general_seats: The number of uncontested seats in the general election.
 #total_officeholders: The total number of officeholders for each position.
 #vacant_officeholders: The number of vacant officeholders for each position.
