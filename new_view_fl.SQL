@@ -8,26 +8,26 @@
 #vacant_officeholders: The number of vacant officeholders for each position.
 #off_cycle_officeholders: The number of off-cycle officeholders for each position.
 
-CREATE OR REPLACE VIEW `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.contest_uncontest_fl_view` AS
+CREATE OR REPLACE VIEW `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.contest_uncontest_view` AS
 WITH candidacy_counts AS (
   SELECT 
+    c.state,
     c.position_id,
     COUNT(DISTINCT c.candidacy_id) AS total_candidates,
     SUM(CASE WHEN c.is_primary = FALSE THEN 1 ELSE 0 END) AS general_candidates,
     SUM(CASE WHEN c.is_primary = TRUE THEN 1 ELSE 0 END) AS primary_candidates
   FROM `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.br_candidacies` c
-  WHERE c.state = 'FL'
-  GROUP BY c.position_id
+  GROUP BY c.state, c.position_id
 ),
 officeholder_counts AS (
   SELECT 
+    oh.state,
     oh.position_id,
     COUNT(DISTINCT oh.office_holder_id) AS total_officeholders,
     SUM(CASE WHEN oh.is_vacant = TRUE THEN 1 ELSE 0 END) AS vacant_officeholders,
     SUM(CASE WHEN oh.is_off_cycle = TRUE THEN 1 ELSE 0 END) AS off_cycle_officeholders
   FROM `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.br_officeholders` oh
-  WHERE oh.state = 'FL'
-  GROUP BY oh.position_id
+  GROUP BY oh.state, oh.position_id
 )
 SELECT 
   c.state,
@@ -48,25 +48,28 @@ SELECT
     ELSE 'Local'
   END AS position_type,
   SUM(c.number_of_seats) AS sum_number_of_seats,
-  
-  -- Agg up the candidacy counts correctly
+
+  -- Aggregate candidacy counts correctly
   SUM(cc.total_candidates) AS total_candidates,
   SUM(cc.general_candidates) AS general_candidates,
-  
-  -- Calc uncontested seats directly in the main query
-  COUNT(DISTINCT CASE WHEN c.number_of_seats >= cc.total_candidates THEN c.position_id END) AS uncontested_seats,
-  
-  -- Calc uncontested general election seats directly in the main query
-  COUNT(DISTINCT CASE WHEN c.is_primary = FALSE AND c.number_of_seats >= cc.general_candidates THEN c.position_id END) AS uncontested_general_seats,
 
-  -- Agg up the officeholder counts correctly
+  -- Calculate uncontested seats, ignoring zero candidate values
+  COUNT(DISTINCT CASE 
+    WHEN cc.total_candidates > 0 AND c.number_of_seats >= cc.total_candidates THEN c.position_id 
+  END) AS uncontested_seats,
+
+  -- Calculate uncontested general election seats, also ignoring zero candidate values
+  COUNT(DISTINCT CASE 
+    WHEN cc.general_candidates > 0 AND c.number_of_seats >= cc.general_candidates THEN c.position_id 
+  END) AS uncontested_general_seats,
+
+  -- Aggregate officeholder counts correctly
   SUM(oc.total_officeholders) AS total_officeholders,
   SUM(oc.vacant_officeholders) AS vacant_officeholders,
   SUM(oc.off_cycle_officeholders) AS off_cycle_officeholders
 FROM `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.br_candidacies` c
 LEFT JOIN candidacy_counts cc
-  ON c.position_id = cc.position_id
+  ON c.state = cc.state AND c.position_id = cc.position_id
 LEFT JOIN officeholder_counts oc
-  ON c.position_id = oc.position_id
-WHERE c.state = 'FL'
-GROUP BY c.state, election_year, c.position_name, c.position_id, c.geo_id, c.mtfcc, c.level, c.normalized_position_name, c.is_judicial
+  ON c.state = oc.state AND c.position_id = oc.position_id
+GROUP BY c.state, election_year, c.position_name, c.position_id, c.geo_id, c.mtfcc, c.level, c.normalized_position_name, c.is_judicial;
