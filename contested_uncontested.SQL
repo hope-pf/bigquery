@@ -73,3 +73,30 @@ LEFT JOIN candidacy_counts cc
 LEFT JOIN officeholder_counts oc
   ON c.state = oc.state AND c.position_id = oc.position_id
 GROUP BY c.state, election_year, c.position_name, c.position_id, c.geo_id, c.mtfcc, c.level, c.normalized_position_name, c.is_judicial;
+
+## TMC Creation
+CREATE OR REPLACE TABLE `proj-tmc-mem-pia.pipeline_ballotready.aggregate_elections` AS
+
+WITH overlaps_cte AS (
+  SELECT * FROM `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.house_overlaps` WHERE state = 'FL'
+  UNION ALL
+  SELECT * FROM `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.county_overlaps` WHERE state = 'FL'
+  UNION ALL
+  SELECT * FROM `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.senate_overlaps` WHERE state = 'FL'
+)
+
+SELECT 
+  COALESCE(overlaps_cte.county, 'Unknown') AS county,  -- Handle NULL values
+  election_results.position_type, 
+  election_results.election_year,  
+  SUM(election_results.uncontested_seats) AS total_uncontested,
+  SUM(election_results.total_candidates) AS total_candidates,
+  SUM(election_results.sum_number_of_seats) AS total_seats,
+  SUM(election_results.general_candidates) AS total_general_candidates,
+  SUM(election_results.total_officeholders) AS total_officeholders,
+  SUM(election_results.vacant_officeholders) AS vacant_officeholders,
+  SUM(election_results.off_cycle_officeholders) AS off_cycle_officeholders
+FROM `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.contest_uncontest_fl_view` election_results
+LEFT JOIN overlaps_cte 
+  ON election_results.position_id = overlaps_cte.position_id 
+GROUP BY 1, 2, 3;
