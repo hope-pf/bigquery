@@ -48,6 +48,11 @@ SELECT
     ELSE 'Local'
   END AS geography_level,
 
+  -- Include position_id, geo_id, and mtfcc
+  election_results.position_id,
+  election_results.geo_id,
+  election_results.mtfcc,
+
   -- Count of total positions
   COUNT(*) AS count_of_positions,
 
@@ -80,7 +85,7 @@ SELECT
   SUM(election_results.vacant_officeholders) AS vacant_officeholders,
   SUM(election_results.off_cycle_officeholders) AS off_cycle_officeholders
 
-FROM `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.contest_uncontest_fl_view` election_results
+FROM `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.contest_uncontest_view` election_results
 
 LEFT JOIN overlaps_cte 
   ON election_results.position_id = overlaps_cte.position_id 
@@ -90,6 +95,9 @@ GROUP BY
   district_name,
   election_results.position,
   election_results.position_type,
-  geography_level
+  geography_level,
+  election_results.position_id,
+  election_results.geo_id,
+  election_results.mtfcc
 
-ORDER BY election_year, district_name, position
+ORDER BY election_year, district_name, position;
