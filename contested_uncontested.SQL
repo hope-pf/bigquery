@@ -78,25 +78,74 @@ GROUP BY c.state, election_year, c.position_name, c.position_id, c.geo_id, c.mtf
 CREATE OR REPLACE TABLE `proj-tmc-mem-pia.pipeline_ballotready.aggregate_elections` AS
 
 WITH overlaps_cte AS (
-  SELECT * FROM `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.house_overlaps` WHERE state = 'FL'
+  SELECT * 
+  FROM `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.house_overlaps` 
+  WHERE state = 'FL'
+  
   UNION ALL
-  SELECT * FROM `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.county_overlaps` WHERE state = 'FL'
+  
+  SELECT * 
+  FROM `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.county_overlaps` 
+  WHERE state = 'FL'
+  
   UNION ALL
-  SELECT * FROM `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.senate_overlaps` WHERE state = 'FL'
+  
+  SELECT * 
+  FROM `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.senate_overlaps` 
+  WHERE state = 'FL'
 )
 
 SELECT 
-  COALESCE(overlaps_cte.county, 'Unknown') AS county,  -- Handle NULL values
-  election_results.position_type, 
-  election_results.election_year,  
-  SUM(election_results.uncontested_seats) AS total_uncontested,
+  election_results.election_year,
+  COALESCE(overlaps_cte.county, 'Unknown') AS district_name,
+  election_results.position_type AS position_type,
+  
+  CASE
+    WHEN election_results.position_type LIKE '%State%' THEN 'Statewide'
+    WHEN election_results.position_type LIKE '%House%' OR election_results.position_type LIKE '%Senate%' THEN 'State Legislature'
+    ELSE 'County or Local'
+  END AS geography_level,
+
+  -- Count of total positions
+  COUNT(*) AS count_of_positions,
+
+  -- Total contested positions (more candidates than seats)
+  SUM(CASE 
+        WHEN election_results.total_candidates > election_results.sum_number_of_seats 
+        THEN 1 
+        ELSE 0 
+      END) AS total_contested_positions,
+
+  -- Total uncontested positions (candidates <= seats)
+  SUM(CASE 
+        WHEN election_results.total_candidates <= election_results.sum_number_of_seats 
+        THEN 1 
+        ELSE 0 
+      END) AS total_uncontested_positions,
+
+  -- Total uncontested general seats
+  SUM(CASE 
+        WHEN election_results.total_candidates <= election_results.sum_number_of_seats 
+        THEN election_results.sum_number_of_seats
+        ELSE 0 
+      END) AS total_uncontested_general_seats,
+
+  -- Candidate and officeholder aggregates
   SUM(election_results.total_candidates) AS total_candidates,
-  SUM(election_results.sum_number_of_seats) AS total_seats,
-  SUM(election_results.general_candidates) AS total_general_candidates,
+  SUM(election_results.general_candidates) AS total_candidates_general,
+  SUM(election_results.sum_number_of_seats) AS total_num_of_seats_available,
   SUM(election_results.total_officeholders) AS total_officeholders,
   SUM(election_results.vacant_officeholders) AS vacant_officeholders,
   SUM(election_results.off_cycle_officeholders) AS off_cycle_officeholders
+
 FROM `prod-pipeline-initia-6a1e01ea.pipeline_partner_data.contest_uncontest_fl_view` election_results
+
 LEFT JOIN overlaps_cte 
   ON election_results.position_id = overlaps_cte.position_id 
-GROUP BY 1, 2, 3;
+
+GROUP BY 
+  election_results.election_year,
+  district_name,
+  election_results.position_type,
+  geography_level;
+
